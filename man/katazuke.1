@@ -27,7 +27,12 @@ A disk is named by its device, such as
 .IR /dev/disk4 ,
 or by any volume mounted from it, such as
 .IR /Volumes/USB ,
-which stands for the whole disk. Every FAT and exFAT volume on it is tidied.
+which stands for the whole disk. Every FAT and exFAT volume on it is tidied,
+even when a single partition such as
+.I /dev/disk8s2
+is named, after one confirmation that lists them all. Other filesystems on
+the disk are left alone. A volume that fails its check stops the run: the
+volumes before it stay tidied and the ones after it are untouched.
 .PP
 Each volume is checked read-only first, and a volume with filesystem errors is
 left untouched. Before anything changes, katazuke prints what it is about to

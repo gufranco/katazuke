@@ -119,6 +119,8 @@ katazuke --order mixed --no-eject /dev/disk4
 
 A disk is named by its device, such as `/dev/disk4`, or by any volume mounted from it, such as `/Volumes/USB`; katazuke works out the whole disk behind the volume and tidies every FAT and exFAT volume on it.
 
+**One partition stands for its whole disk too.** `katazuke /dev/disk8s2` tidies every FAT and exFAT volume on `/dev/disk8`, not only the second partition. The summary lists each volume before you confirm, and one confirmation covers them all. Other filesystems on the disk, such as APFS or ext4, are left alone. Volumes are tidied in order, and a volume that fails its check stops the run: the ones before it stay tidied and the ones after it are untouched.
+
 katazuke follows the shared command-line contract of its family, described in [FAMILY.md](FAMILY.md).
 
 <a id="what-it-removes"></a>

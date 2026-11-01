@@ -26,6 +26,7 @@ Guidance for anyone, human or agent, changing katazuke. What katazuke is and how
 
 - katazuke has one job, so a bare `katazuke` on a terminal asks for the disk directly, listing only external disks that carry a FAT or exFAT volume.
 - A run unmounts each volume, checks it read-only, mounts it, removes the junk, unmounts it, sorts it with fatsort, and ejects the disk at the end. A volume with filesystem errors stops the run before any change.
+- A partition or volume stands for its whole disk, as the family rule says: `katazuke /dev/disk8s2` tidies every FAT and exFAT volume on `/dev/disk8` after one confirmation. The owner kept this on 2026-11-01 over narrowing to the named partition or asking which volumes to tidy.
 - `check` mounts an unmounted volume read-only, lists its junk, and unmounts it again, so it never changes the disk.
 - `--json` on a run reports the disk, whether it succeeded, the number of junk files removed, whether the disk was ejected, and each volume; on `check` it reports the disk, whether it is clean, and the junk on each volume.
 

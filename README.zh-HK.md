@@ -119,6 +119,8 @@ katazuke --order mixed --no-eject /dev/disk4
 
 磁碟可以用裝置名稱指定，例如 `/dev/disk4`，亦可用從它掛載的任何卷宗指定，例如 `/Volumes/USB`；katazuke 會找出卷宗背後的整個磁碟，並整理其中每個 FAT 和 exFAT 卷宗。
 
+**指定單一分割區同樣代表整個磁碟。** `katazuke /dev/disk8s2` 會整理 `/dev/disk8` 上每個 FAT 和 exFAT 卷宗，而不只是第二個分割區。確認之前，摘要會列出每個卷宗，一次確認即適用於全部。磁碟上的其他檔案系統，例如 APFS 或 ext4，不會被改動。各卷宗按次序整理，若某個卷宗檢查失敗，流程即在該處停止：之前的卷宗保持已整理，之後的卷宗不受影響。
+
 katazuke 遵從家族共用的指令行約定，內容見 [FAMILY.md](FAMILY.md)。
 
 <a id="what-it-removes"></a>
