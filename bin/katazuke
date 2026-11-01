@@ -1,0 +1,328 @@
+#!/bin/sh
+[ -n "${ZSH_VERSION:-}" ] && emulate sh
+
+for disk_inherited in $(env | sed -n 's/^\(DISK_[A-Za-z0-9_]*\)=.*/\1/p'); do
+  unset "${disk_inherited}"
+done
+
+disk_self="$0"
+case "${disk_self}" in
+*/*) ;;
+*) disk_self="$(command -v -- "${disk_self}")" ;;
+esac
+DISK_LIB="$(cd "${disk_self%/*}/../lib" && pwd)" || exit 1
+
+DISK_PROG=katazuke
+# shellcheck source=SCRIPTDIR/../lib/core.sh
+. "${DISK_LIB}/core.sh"
+# shellcheck source=SCRIPTDIR/../lib/cli.sh
+. "${DISK_LIB}/cli.sh"
+# shellcheck source=SCRIPTDIR/../lib/disk.sh
+. "${DISK_LIB}/disk.sh"
+# shellcheck source=SCRIPTDIR/../lib/tidy.sh
+. "${DISK_LIB}/tidy.sh"
+
+disk_usage() {
+  cat <<'USAGE'
+katazuke - remove junk files from a FAT or exFAT disk, then sort its folders
+
+usage:
+  katazuke                          ask for the disk
+  katazuke [options] <device|mount_point>
+                                    clean, sort and eject that disk
+  katazuke check [options] <device|mount_point>
+                                    list the junk files, changing nothing
+  katazuke doctor                   check the tools katazuke needs
+  katazuke version                  print the version
+  katazuke help                     print this page
+
+options:
+  --natural | --no-natural          sort numbers by value, so Disc 2 comes
+                                    before Disc 10 (default yes)
+  --order dirs|files|mixed          folders first, files first, or both
+                                    together (default dirs)
+  --eject | --no-eject              eject the disk when done (default yes)
+  --allow-internal                  allow an internal disk. the system disk is
+                                    always refused
+  --json                            print the result as one JSON object, for
+                                    scripts
+
+environment:
+  KATAZUKE_NATURAL, KATAZUKE_EJECT, KATAZUKE_ALLOW_INTERNAL and KATAZUKE_JSON
+  take y or n, and KATAZUKE_ORDER takes dirs, files or mixed. an option on the
+  command line wins.
+
+notes:
+  A disk is named by its device, such as /dev/disk4, or by any volume mounted
+  from it, such as /Volumes/USB, which stands for the whole disk. Every FAT and
+  exFAT volume on it is tidied.
+
+  Many devices list files in the order they sit on the disk, not by name:
+  flash carts, game loaders, MP3 players and car stereos. katazuke removes the
+  files that macOS, Windows, Linux and NAS systems leave behind, then rewrites
+  each folder in sorted order with fatsort. Each volume is checked read-only
+  first, and a volume with filesystem errors is left untouched.
+
+examples:
+  katazuke /dev/disk4
+  katazuke /Volumes/EZFLASH
+  katazuke check /dev/sdb
+  katazuke --order mixed --no-eject /dev/disk4
+USAGE
+}
+
+disk_option_flag() {
+  case "$1" in
+  --natural) KATAZUKE_NATURAL=y ;;
+  --no-natural) KATAZUKE_NATURAL=n ;;
+  --eject) KATAZUKE_EJECT=y ;;
+  --no-eject) KATAZUKE_EJECT=n ;;
+  --allow-internal) KATAZUKE_ALLOW_INTERNAL=y ;;
+  --json) KATAZUKE_JSON=y ;;
+  *) return 1 ;;
+  esac
+  return 0
+}
+
+disk_option_value() {
+  KATAZUKE_ORDER="$2"
+  return 0
+}
+
+disk_check_order() {
+  case "${KATAZUKE_ORDER:-dirs}" in
+  dirs | files | mixed) return 0 ;;
+  *)
+    disk_error "--order must be dirs, files or mixed, got: ${KATAZUKE_ORDER}"
+    return 1
+    ;;
+  esac
+}
+
+disk_plan_text() {
+  disk_pt_order="folders first"
+  case "${KATAZUKE_ORDER:-dirs}" in
+  files) disk_pt_order="files first" ;;
+  mixed) disk_pt_order="folders and files together" ;;
+  *) ;;
+  esac
+  disk_pt_kind="in natural order"
+  [ "${KATAZUKE_NATURAL:-y}" = n ] && disk_pt_kind="by name"
+  disk_info "Plan:   remove junk files, then sort ${disk_pt_order} ${disk_pt_kind}"
+  if [ "${KATAZUKE_EJECT:-y}" = n ]; then
+    disk_info "        then leave the disk attached"
+  else
+    disk_info "        then eject"
+  fi
+}
+
+disk_volume_line() {
+  disk_vli_name="$(disk_fs_name "$2" "$3")"
+  disk_vli_label="$(disk_volume_label "$2")"
+  disk_info "$1 $2, ${disk_vli_name}${disk_vli_label:+, ${disk_vli_label}}"
+}
+
+disk_summary() {
+  [ "${KATAZUKE_JSON:-n}" != y ] || return 0
+  printf '\n'
+  disk_sm_size="$(disk_size_bytes "$1")"
+  disk_sm_human="$(disk_human "${disk_sm_size}")"
+  disk_sm_id="$(disk_identity "$1")"
+  disk_info "Disk:   $1, ${disk_sm_human}, ${disk_sm_id:-unnamed device}"
+  disk_sm_label="Volume:"
+  while read -r disk_sm_dev disk_sm_type; do
+    disk_volume_line "${disk_sm_label}" "${disk_sm_dev}" "${disk_sm_type}"
+    disk_sm_label="       "
+  done <<EOF
+${DISK_PARTITIONS}
+EOF
+  disk_plan_text
+  printf '\n'
+}
+
+disk_find_target() {
+  DISK_TARGET="$(disk_resolve "$1")" || return 1
+  disk_refuse_target "${DISK_TARGET}" || return 1
+  DISK_PARTITIONS="$(disk_fat_partitions "${DISK_TARGET}")"
+  if [ -z "${DISK_PARTITIONS}" ]; then
+    disk_error "stopped: ${DISK_TARGET} has no FAT or exFAT volume."
+    return 1
+  fi
+  return 0
+}
+
+disk_json_part() {
+  disk_jp_dev="$(disk_json_string "$1")"
+  DISK_JSON_PARTS="${DISK_JSON_PARTS}${DISK_JSON_PARTS:+,}{\"device\":${disk_jp_dev},$2}"
+}
+
+disk_tidy_volume() {
+  disk_unmount "$1" || return 1
+  disk_fsck "$1" "$2" || return 1
+  disk_mounted_at "$1" rw || return 1
+  disk_tv_point="${DISK_POINT}"
+  disk_tv_junk="$(disk_junk_find "${disk_tv_point}" text)"
+  disk_tv_count="$(printf '%s' "${disk_tv_junk}" | awk 'END { print NR }')"
+  disk_junk_find "${disk_tv_point}" remove || {
+    disk_error "could not remove every junk file from ${disk_tv_point}."
+    return 1
+  }
+  sync
+  disk_unmount "$1" || return 1
+  disk_sort "$1" || return 1
+  DISK_REMOVED=$((DISK_REMOVED + disk_tv_count))
+  disk_json_part "$1" "\"removed\":${disk_tv_count},\"sorted\":true"
+  disk_tv_text="$(disk_junk_count "${disk_tv_count}")"
+  disk_success "Removed ${disk_tv_text} from $1 and sorted it."
+}
+
+disk_tidy_all() {
+  while read -r disk_ta_dev disk_ta_type; do
+    disk_tidy_volume "${disk_ta_dev}" "${disk_ta_type}" || return 1
+  done <<EOF
+${DISK_PARTITIONS}
+EOF
+  return 0
+}
+
+disk_finish() {
+  if [ "${KATAZUKE_EJECT:-y}" = n ]; then
+    disk_success "Done. $1 is tidy and still attached."
+    return 0
+  fi
+  if disk_eject "$1"; then
+    DISK_EJECTED=true
+    disk_success "Ejected. $1 is safe to remove."
+    return 0
+  fi
+  disk_warning "$1 did not eject. it is already tidy, so remove it once it is idle."
+  return 0
+}
+
+disk_cleanup() {
+  disk_release_mounts
+  disk_drop_tmpdir
+}
+
+disk_run() {
+  disk_check_order || return 1
+  if ! disk_cmd_exists fatsort; then
+    disk_error "stopped: fatsort is not installed. run 'katazuke doctor'."
+    return 1
+  fi
+  disk_find_target "$1" || return 1
+  disk_summary "${DISK_TARGET}"
+  disk_confirm_names "${DISK_TARGET}" tidy || return 1
+  disk_make_tmpdir || return 1
+  trap 'disk_cleanup; exit 130' INT TERM
+  disk_rn_status=0
+  disk_tidy_all || disk_rn_status=1
+  disk_cleanup
+  trap - INT TERM
+  [ "${disk_rn_status}" -eq 0 ] || return 1
+  disk_finish "${DISK_TARGET}"
+}
+
+disk_check_volume() {
+  disk_mounted_at "$1" ro || return 1
+  disk_cv_junk="$(disk_junk_find "${DISK_POINT}" "$3")"
+  disk_cv_count="$(printf '%s' "${disk_cv_junk}" | awk 'END { print NR }')"
+  DISK_REMOVED=$((DISK_REMOVED + disk_cv_count))
+  disk_volume_line "Volume:" "$1" "$2"
+  if [ "$3" = json ]; then
+    disk_cv_list="$(printf '%s\n' "${disk_cv_junk}" | awk 'NF { printf "%s\"%s\"", (n++ ? "," : ""), $0 }')"
+    disk_json_part "$1" "\"junk\":[${disk_cv_list}]"
+  elif [ "${disk_cv_count}" -gt 0 ]; then
+    disk_cv_text="$(printf '%s\n' "${disk_cv_junk}" | awk '{ print "        " $0 }')"
+    disk_say 8 "${disk_cv_text}"
+  else
+    disk_info "        no junk files"
+  fi
+  case " ${DISK_MOUNTED_HERE} " in
+  *" $1 "*) disk_unmount "$1" ;;
+  *) ;;
+  esac
+}
+
+disk_check_all() {
+  disk_ca_mode=text
+  [ "${KATAZUKE_JSON:-n}" = y ] && disk_ca_mode=json
+  while read -r disk_ca_dev disk_ca_type; do
+    disk_check_volume "${disk_ca_dev}" "${disk_ca_type}" "${disk_ca_mode}" || return 1
+  done <<EOF
+${DISK_PARTITIONS}
+EOF
+  return 0
+}
+
+disk_check() {
+  disk_find_target "$1" || return 1
+  disk_make_tmpdir || return 1
+  trap 'disk_cleanup; exit 130' INT TERM
+  disk_ck_status=0
+  disk_check_all || disk_ck_status=1
+  disk_cleanup
+  trap - INT TERM
+  [ "${disk_ck_status}" -eq 0 ] || return 1
+  if [ "${DISK_REMOVED}" -eq 0 ]; then
+    disk_success "${DISK_TARGET} is clean: no junk files found."
+  else
+    disk_ck_text="$(disk_junk_count "${DISK_REMOVED}")"
+    disk_success "Found ${disk_ck_text} on ${DISK_TARGET}. run katazuke ${DISK_TARGET} to remove them."
+  fi
+}
+
+disk_report() {
+  disk_rp_status=0
+  "$1" "$2" || disk_rp_status=1
+  [ "${KATAZUKE_JSON:-n}" = y ] && [ -n "${DISK_TARGET}" ] || return "${disk_rp_status}"
+  disk_rp_disk="$(disk_json_string "${DISK_TARGET}")"
+  if [ "$1" = disk_check ]; then
+    disk_rp_clean=false
+    [ "${DISK_REMOVED}" -eq 0 ] && disk_rp_clean=true
+    printf '{"disk":%s,"clean":%s,"volumes":[%s]}\n' "${disk_rp_disk}" "${disk_rp_clean}" "${DISK_JSON_PARTS}"
+  else
+    disk_rp_ok=false
+    [ "${disk_rp_status}" -eq 0 ] && disk_rp_ok=true
+    printf '{"disk":%s,"ok":%s,"removed":%s,"ejected":%s,"volumes":[%s]}\n' "${disk_rp_disk}" \
+      "${disk_rp_ok}" "${DISK_REMOVED}" "${DISK_EJECTED}" "${DISK_JSON_PARTS}"
+  fi
+  return "${disk_rp_status}"
+}
+
+disk_cli_start() {
+  disk_cs_action=disk_run
+  if [ "${1:-}" = check ]; then
+    disk_cs_action=disk_check
+    shift
+  fi
+  if [ "$#" -gt 1 ]; then
+    disk_cli_hint "unexpected extra argument '$2'"
+    return 1
+  fi
+  if [ "$#" -eq 1 ]; then
+    disk_report "${disk_cs_action}" "$1"
+    return "$?"
+  fi
+  if disk_cli_interactive; then
+    disk_cs_disk="$(disk_pick "Tidy which disk? Number or name: ")" || return 1
+    disk_report "${disk_cs_action}" "${disk_cs_disk}"
+    return "$?"
+  fi
+  disk_cli_hint "no disk given"
+  return 1
+}
+
+disk_main() {
+  case "${1:-}" in
+  help | -h | --help) disk_usage ;;
+  version | -V | --version) disk_cli_version ;;
+  doctor) disk_doctor ;;
+  *)
+    DISK_VALUE_OPTIONS="--order"
+    disk_cli_parse "$@"
+    ;;
+  esac
+}
+
+disk_main "$@"

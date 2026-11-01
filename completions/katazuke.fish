@@ -1,0 +1,12 @@
+complete -c katazuke -n __fish_use_subcommand -a check -d 'list the junk files, changing nothing'
+complete -c katazuke -n __fish_use_subcommand -a doctor -d 'check the tools katazuke needs'
+complete -c katazuke -n __fish_use_subcommand -a version -d 'print the version'
+complete -c katazuke -n __fish_use_subcommand -a help -d 'print usage'
+
+complete -c katazuke -l natural -d 'sort numbers by value'
+complete -c katazuke -l no-natural -d 'sort digit by digit'
+complete -c katazuke -l order -x -a 'dirs files mixed' -d 'folders first, files first, or both together'
+complete -c katazuke -l eject -d 'eject the disk when done'
+complete -c katazuke -l no-eject -d 'leave the disk attached'
+complete -c katazuke -l allow-internal -d 'allow an internal disk'
+complete -c katazuke -l json -d 'print the result as one JSON object, for scripts'

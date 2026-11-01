@@ -1,0 +1,28 @@
+#compdef katazuke
+
+_katazuke() {
+  local -a commands
+  commands=(
+    'check:list the junk files, changing nothing'
+    'doctor:check the tools katazuke needs'
+    'version:print the version'
+    'help:print usage'
+  )
+
+  if (( CURRENT == 2 )) && [[ "${words[2]}" != -* ]]; then
+    _alternative 'commands:command:_describe command commands' 'files:device:_files'
+    return
+  fi
+
+  _arguments \
+    '--natural[sort numbers by value]' \
+    '--no-natural[sort digit by digit]' \
+    '--order[folders first, files first, or both together]:order:(dirs files mixed)' \
+    '--eject[eject the disk when done]' \
+    '--no-eject[leave the disk attached]' \
+    '--allow-internal[allow an internal disk]' \
+    '--json[print the result as one JSON object, for scripts]' \
+    '*:device:_files'
+}
+
+_katazuke "$@"

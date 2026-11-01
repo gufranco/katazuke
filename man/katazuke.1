@@ -1,0 +1,136 @@
+.TH KATAZUKE 1 "2026-10-31" "katazuke" "User Commands"
+.SH NAME
+katazuke \- remove junk files from a FAT or exFAT disk, then sort its folders
+.SH SYNOPSIS
+.B katazuke
+.br
+.B katazuke
+.RI [ options ] " device" | mount_point
+.br
+.B katazuke check
+.RI [ options ] " device" | mount_point
+.br
+.B katazuke doctor
+.br
+.B katazuke version
+.br
+.B katazuke help
+.SH DESCRIPTION
+Many devices list files in the order they sit on the disk, not by name: flash
+carts, game loaders, MP3 players and car stereos.
+.B katazuke
+removes the files that macOS, Windows, Linux and NAS systems leave behind,
+then rewrites each folder in sorted order with
+.BR fatsort (1).
+.PP
+A disk is named by its device, such as
+.IR /dev/disk4 ,
+or by any volume mounted from it, such as
+.IR /Volumes/USB ,
+which stands for the whole disk. Every FAT and exFAT volume on it is tidied.
+.PP
+Each volume is checked read-only first, and a volume with filesystem errors is
+left untouched. Before anything changes, katazuke prints what it is about to
+do and asks for the device name to be typed back.
+.PP
+Names such as
+.I System Volume Information
+and
+.I .Spotlight-V100
+are removed only at the top of a volume. Names such as
+.IR ._* ,
+.I .DS_Store
+and
+.I Thumbs.db
+are removed in every folder.
+.SH COMMANDS
+.TP
+.B check
+List the junk files on every volume, changing nothing. A volume that is not
+mounted is mounted read-only for the listing, then unmounted again.
+.TP
+.B doctor
+List the tools katazuke needs and whether each is installed. Exits non-zero
+only when a required tool is missing.
+.TP
+.B version
+Print the version and the platform.
+.TP
+.B help
+Print the usage page.
+.SH OPTIONS
+.TP
+.BR \-\-natural ", " \-\-no\-natural
+Sort numbers by value, so Disc 2 comes before Disc 10. Default yes. Natural
+order compares names byte by byte, so a name starting with an accented or
+non-Latin letter sorts before every A to Z name on macOS and after them on
+Linux arm64. With
+.BR \-\-no\-natural ,
+they come after every A to Z name on both.
+.TP
+.BI \-\-order " dirs" | files | mixed
+Put folders first, files first, or both together. Default dirs.
+.TP
+.BR \-\-eject ", " \-\-no\-eject
+Eject the disk when done. Default yes.
+.TP
+.B \-\-allow\-internal
+Allow an internal disk. The disk holding the running system is always refused.
+.TP
+.B \-\-json
+Print the result as one JSON object on stdout, for scripts. A run reports the
+disk, whether it succeeded, how many junk files it removed, whether the disk
+was ejected, and each volume. A check reports the disk, whether it is clean,
+and the junk files on each volume.
+.PP
+Every option that takes a value also takes the form
+.IR \-\-name = value ,
+and
+.B \-\-
+ends the options.
+.SH ENVIRONMENT
+.TP
+.B KATAZUKE_NATURAL
+Set to
+.B y
+or
+.B n
+for the same effect as
+.B \-\-natural
+or
+.BR \-\-no\-natural .
+.TP
+.B KATAZUKE_ORDER
+Same as
+.BR \-\-order .
+.TP
+.B KATAZUKE_EJECT
+Set to
+.B y
+or
+.B n
+for the same effect as
+.B \-\-eject
+or
+.BR \-\-no\-eject .
+.TP
+.B KATAZUKE_ALLOW_INTERNAL
+Set to
+.B y
+for the same effect as
+.BR \-\-allow\-internal .
+.TP
+.B KATAZUKE_JSON
+Set to
+.B y
+for the same effect as
+.BR \-\-json .
+.PP
+An option on the command line wins over the environment.
+.SH EXIT STATUS
+0 when every volume was tidied, or when a check finished, and 1 on any failure
+or refusal.
+.SH SEE ALSO
+.BR fatsort (1),
+.BR kakikomi (1),
+.BR kiyome (1)

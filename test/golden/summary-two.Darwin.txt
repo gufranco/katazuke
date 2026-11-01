@@ -1,0 +1,8 @@
+
+Disk:   DEV, SIZE, NAME
+Volume: PART1, FAT32, ONE
+        PART2, exFAT, TWO
+Plan:   remove junk files, then sort folders first in natural order
+        then eject
+
+Type DISK to tidy, or anything else to stop: katazuke: stopped: nothing was changed.
