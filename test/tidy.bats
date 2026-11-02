@@ -137,6 +137,20 @@ answering_path() {
   [[ "${output}" == "/b.txt" ]]
 }
 
+@test "a blkid that ignores -p -o export, as BusyBox's does, still finds every volume with its label" {
+  # Arrange
+  [[ "${KATAZUKE_TEST_OS}" == "Linux" ]] || skip "blkid is the Linux probe"
+  disk_test_two_volumes
+  disk_test_shim blkid 'case "$1" in -p) shift 3 ;; esac; exec "$REAL" "$@"'
+
+  # Act
+  run disk_test_answering stop "${DEVICE}"
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"Volume: ${PART}, FAT"*", ONE"$'\n'"        ${PART2}, exFAT, TWO"$'\n'* ]]
+}
+
 @test "a real fatsort older than 1.7 names the fix for an exFAT volume it cannot sort" {
   # Arrange
   disk_test_need_exfat

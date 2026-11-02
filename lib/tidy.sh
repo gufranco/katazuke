@@ -143,7 +143,7 @@ disk_fat_partitions() {
     # shellcheck disable=SC2086
     disk_fp_order="$(printf '%s ' ${disk_fp_names})"
     # shellcheck disable=SC2086
-    disk_fp_probe="$(disk_as_root "$1" blkid -p -o export ${disk_fp_names} 2>/dev/null)"
+    disk_fp_probe="$(disk_blkid_export ${disk_fp_names})"
     printf '%s\n' "${disk_fp_probe}" | awk -F= -v names="${disk_fp_order}" '
       $1 == "DEVNAME" { dev = $2 }
       $1 == "TYPE" && ($2 == "vfat" || $2 == "msdos") { kind[dev] = "fat" }
@@ -157,9 +157,34 @@ disk_fat_partitions() {
   return 0
 }
 
+disk_blkid_export() {
+  disk_be_text="$(disk_as_root "$1" blkid -p -o export "$@" 2>/dev/null)"
+  case "${disk_be_text}" in
+  DEVNAME=*)
+    printf '%s\n' "${disk_be_text}"
+    return 0
+    ;;
+  *) ;;
+  esac
+  printf '%s\n' "${disk_be_text}" | awk '
+    NF > 0 {
+      dev = $1
+      sub(/:$/, "", dev)
+      print "DEVNAME=" dev
+      rest = substr($0, length($1) + 2)
+      while (match(rest, /[A-Z_]+="[^"]*"/)) {
+        pair = substr(rest, RSTART, RLENGTH)
+        eq = index(pair, "=")
+        print substr(pair, 1, eq - 1) "=" substr(pair, eq + 2, length(pair) - eq - 2)
+        rest = substr(rest, RSTART + RLENGTH)
+      }
+    }'
+}
+
 disk_blkid_value() {
-  disk_bv_text="$(disk_as_root "$1" blkid -p -o value -s "$2" "$1" 2>/dev/null)"
-  printf '%s\n' "${disk_bv_text}"
+  disk_bv_text="$(disk_blkid_export "$1")"
+  printf '%s\n' "${disk_bv_text}" | awk -v key="$2" '
+    index($0, key "=") == 1 { print substr($0, length(key) + 2); exit }'
 }
 
 disk_fs_name() {
