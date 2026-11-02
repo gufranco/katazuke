@@ -286,6 +286,21 @@ disk_sort_flags() {
   fi
 }
 
+disk_fatsort_version() {
+  disk_fv_text="$(fatsort -v 2>/dev/null)" || true
+  disk_fv_line="$(printf '%s\n' "${disk_fv_text}" | sed -n '1p')"
+  printf '%s\n' "${disk_fv_line#fatsort }"
+}
+
+disk_fatsort_dated() {
+  disk_fd_version="$(disk_fatsort_version)"
+  disk_fd_major="${disk_fd_version%%.*}"
+  disk_fd_rest="${disk_fd_version#*.}"
+  disk_fd_minor="${disk_fd_rest%%.*}"
+  disk_is_uint "${disk_fd_major}" && disk_is_uint "${disk_fd_minor}" || return 1
+  [ "${disk_fd_major}" -lt 1 ] || { [ "${disk_fd_major}" -eq 1 ] && [ "${disk_fd_minor}" -lt 7 ]; }
+}
+
 disk_sort() {
   disk_so_flags="$(disk_sort_flags)"
   disk_so_log="${DISK_TMPDIR}/fatsort.log"
@@ -294,5 +309,9 @@ disk_sort() {
   disk_error "fatsort could not sort $1."
   disk_so_text="$(sed -n '1,20p' "${disk_so_log}")"
   printf '%s\n' "${disk_so_text}" >&2
+  [ "$2" = exfat ] || return 1
+  disk_fatsort_dated || return 1
+  disk_so_version="$(disk_fatsort_version)"
+  disk_error "fatsort ${disk_so_version} cannot sort every exFAT volume, such as one formatted by mkfs.exfat. fatsort 1.7 or later can."
   return 1
 }

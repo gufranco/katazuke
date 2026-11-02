@@ -169,7 +169,7 @@ disk_tidy_volume() {
   }
   sync
   disk_unmount "$1" || return 1
-  disk_sort "$1" || return 1
+  disk_sort "$1" "$2" || return 1
   DISK_REMOVED=$((DISK_REMOVED + disk_tv_count))
   disk_json_part "$1" "\"removed\":${disk_tv_count},\"sorted\":true"
   disk_tv_text="$(disk_junk_count "${disk_tv_count}")"

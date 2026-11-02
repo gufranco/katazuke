@@ -264,6 +264,18 @@ disk_test_need_exfat() {
   grep -qw exfat /proc/filesystems || skip "this kernel cannot mount exFAT"
 }
 
+disk_test_exfat_sort_blocked() {
+  [[ "${KATAZUKE_TEST_OS}" == "Linux" ]] || return 1
+  disk_test_call disk_fatsort_dated
+}
+
+disk_test_need_exfat_sort() {
+  disk_test_need_exfat
+  if disk_test_exfat_sort_blocked; then
+    skip "this fatsort cannot sort a volume made by mkfs.exfat"
+  fi
+}
+
 disk_test_two_volumes() {
   local image="${WORK:?}/two.dmg"
   case "${KATAZUKE_TEST_OS}" in

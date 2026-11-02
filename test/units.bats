@@ -106,6 +106,40 @@ fake_tool() {
   [[ "${output}" == "${expected}" ]]
 }
 
+@test "fatsort 1.6 is reported as dated, so doctor warns but passes" {
+  # Arrange
+  disk_test_shim fatsort 'echo "fatsort 1.6.5.640"'
+
+  # Act
+  run disk_test_run doctor
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${lines[0]}" == "fatsort            warn     "*", 1.6.5.640, 1.7 or later sorts every exFAT volume" ]]
+}
+
+@test "a fatsort before 1.0 is reported as dated" {
+  # Arrange
+  disk_test_shim fatsort 'echo "fatsort 0.9.17"'
+
+  # Act
+  run disk_test_call disk_fatsort_dated
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+}
+
+@test "a fatsort that prints no version is not called dated" {
+  # Arrange
+  disk_test_shim fatsort 'exit 1'
+
+  # Act
+  run disk_test_call disk_fatsort_dated
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+}
+
 @test "a device the user cannot open is reached through sudo" {
   # Arrange
   disk_test_shim sudo 'printf "sudo %s\n" "$*"'

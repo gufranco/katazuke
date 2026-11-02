@@ -55,7 +55,7 @@ Ejected. /dev/disk8 is safe to remove.
 | 工具 | 用途 | 安裝 |
 |:-----|:-----|:-----|
 | POSIX `sh`、`awk`、`sed`、`find` | 工具本身 | macOS 和 Linux 已預載。毋須 `bash` |
-| `fatsort` | 按排序重寫每個資料夾 | `brew install fatsort`；`apt install fatsort` |
+| `fatsort` | 按排序重寫每個資料夾。1.7 或以上版本可排序所有 exFAT 卷宗；Ubuntu 26.04 內置的 1.6.5 無法排序以 `mkfs.exfat` 格式化的卷宗 | `brew install fatsort`；`apt install fatsort` |
 | `fsck_msdos`、`fsck_exfat` | 在 macOS 上於任何改動前作唯讀檢查 | 已預載 |
 | `fsck.vfat`、`fsck.exfat` | 在 Linux 上作同樣的檢查 | `apt install dosfstools exfatprogs` |
 

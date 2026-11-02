@@ -106,7 +106,7 @@ answering_path() {
 
 @test "KATAZUKE_ORDER=mixed sorts folders and files together on exFAT" {
   # Arrange
-  disk_test_need_exfat
+  disk_test_need_exfat_sort
   disk_test_disk exfat none
   disk_test_populate "${PART}" "c.txt" "B/" "a.txt"
 
@@ -122,7 +122,7 @@ answering_path() {
 
 @test "every FAT and exFAT volume on the disk is tidied and reported as JSON" {
   # Arrange
-  disk_test_need_exfat
+  disk_test_need_exfat_sort
   disk_test_two_volumes
   disk_test_populate "${PART}" "a.txt" "._a.txt"
   disk_test_populate "${PART2}" "b.txt" "Thumbs.db"
@@ -135,6 +135,50 @@ answering_path() {
   [[ "${json}" == "{\"disk\":\"${DEVICE}\",\"ok\":true,\"removed\":"*",\"ejected\":false,\"volumes\":[{\"device\":\"${PART}\",\"removed\":"*",\"sorted\":true},{\"device\":\"${PART2}\",\"removed\":"*",\"sorted\":true}]}" ]]
   run disk_test_names "${PART2}"
   [[ "${output}" == "/b.txt" ]]
+}
+
+@test "a real fatsort older than 1.7 names the fix for an exFAT volume it cannot sort" {
+  # Arrange
+  disk_test_need_exfat
+  disk_test_exfat_sort_blocked || skip "this fatsort sorts every exFAT volume"
+  disk_test_disk exfat none
+  disk_test_populate "${PART}" "b.txt" "a.txt"
+
+  # Act
+  run disk_test_answering "${DEVICE##*/}" --no-eject "${DEVICE}"
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"katazuke: fatsort could not sort ${PART}."* ]]
+  [[ "${output}" == *"cannot sort every exFAT volume, such as one formatted by mkfs.exfat. fatsort 1.7 or later can." ]]
+}
+
+@test "an exFAT sort that fails under fatsort older than 1.7 names the fix" {
+  # Arrange
+  disk_test_disk exfat none
+  disk_test_shim fatsort 'case "$1" in -v) echo "fatsort 1.6.5.640" ;; *) echo "parseExFATClusterChain: Unhandled return code!" >&2; exit 1 ;; esac'
+
+  # Act
+  run disk_test_call call_sort_report "${PART}" exfat
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"parseExFATClusterChain: Unhandled return code!"* ]]
+  [[ "${output}" == *"katazuke: fatsort 1.6.5.640 cannot sort every exFAT volume, such as one formatted by mkfs.exfat. fatsort 1.7 or later can." ]]
+}
+
+@test "an exFAT sort that fails under fatsort 1.7 shows only fatsort's own words" {
+  # Arrange
+  disk_test_disk exfat none
+  disk_test_shim fatsort 'case "$1" in -v) echo "fatsort 1.7.679" ;; *) echo "device busy" >&2; exit 1 ;; esac'
+
+  # Act
+  run disk_test_call call_sort_report "${PART}" exfat
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"device busy"* ]]
+  [[ "${output}" != *"1.7 or later can"* ]]
 }
 
 @test "the summary names the disk, every volume and the plan" {

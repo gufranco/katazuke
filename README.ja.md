@@ -55,7 +55,7 @@ Ejected. /dev/disk8 is safe to remove.
 | ツール | 用途 | インストール |
 |:-------|:-----|:-------------|
 | POSIX `sh`、`awk`、`sed`、`find` | ツール本体 | macOS と Linux に標準で入っています。`bash` は不要です |
-| `fatsort` | 各フォルダを並べ替えて書き直します | `brew install fatsort`、`apt install fatsort` |
+| `fatsort` | 各フォルダを並べ替えて書き直します。1.7 以降はすべての exFAT ボリュームを並べ替えられます。Ubuntu 26.04 の 1.6.5 は `mkfs.exfat` でフォーマットしたものを並べ替えられません | `brew install fatsort`、`apt install fatsort` |
 | `fsck_msdos`、`fsck_exfat` | macOS で、変更前に読み取り専用で検査します | 標準で入っています |
 | `fsck.vfat`、`fsck.exfat` | Linux で同じ検査をします | `apt install dosfstools exfatprogs` |
 

@@ -17,6 +17,14 @@ call_first_boot_disk() {
   printf '%s\n' "${call_fb_list}" | sed -n '1p'
 }
 
+call_sort_report() {
+  disk_make_tmpdir || return 1
+  disk_sr_status=0
+  disk_sort "$1" "$2" || disk_sr_status=1
+  disk_drop_tmpdir
+  return "${disk_sr_status}"
+}
+
 call_release() {
   disk_make_tmpdir || return 1
   disk_mounted_at "$1" ro || return 1

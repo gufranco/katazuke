@@ -68,14 +68,15 @@ teardown() {
 
 @test "doctor lists every dependency and passes when all are present" {
   # Arrange
-  local expected=fatsort
+  local state=ok
+  disk_test_call disk_fatsort_dated && state=warn
 
   # Act
   run disk_test_run doctor
 
   # Assert
   [[ "${status}" -eq 0 ]]
-  [[ "${lines[0]}" == "${expected}"*" ok "* ]]
+  [[ "${lines[0]}" == "fatsort            ${state}"* ]]
   [[ "${output}" == *"sudo               ok"* ]]
 }
 

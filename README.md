@@ -55,7 +55,7 @@ Ejected. /dev/disk8 is safe to remove.
 | Tool | Why | Install |
 |:-----|:----|:--------|
 | POSIX `sh`, `awk`, `sed`, `find` | The tool itself | Preinstalled on macOS and Linux. `bash` is not required |
-| `fatsort` | Rewrites each folder in sorted order | `brew install fatsort`; `apt install fatsort` |
+| `fatsort` | Rewrites each folder in sorted order. 1.7 or later sorts every exFAT volume; Ubuntu 26.04 ships 1.6.5, which cannot sort one formatted by `mkfs.exfat` | `brew install fatsort`; `apt install fatsort` |
 | `fsck_msdos`, `fsck_exfat` | The read-only check before any change, on macOS | Preinstalled |
 | `fsck.vfat`, `fsck.exfat` | The same check on Linux | `apt install dosfstools exfatprogs` |
 

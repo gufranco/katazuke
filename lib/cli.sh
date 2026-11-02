@@ -93,9 +93,25 @@ disk_doctor_platform() {
   return "${disk_dp_status}"
 }
 
+disk_doctor_fatsort() {
+  disk_dfs_found="$(command -v fatsort 2>/dev/null || true)"
+  if [ -z "${disk_dfs_found}" ]; then
+    disk_doctor_row fatsort missing required
+    return 1
+  fi
+  disk_dfs_version="$(disk_fatsort_version)"
+  if disk_fatsort_dated; then
+    disk_doctor_row fatsort warn "${disk_dfs_found}, ${disk_dfs_version}, 1.7 or later sorts every exFAT volume"
+  else
+    disk_doctor_row fatsort ok "${disk_dfs_found}, ${disk_dfs_version}"
+  fi
+  return 0
+}
+
 disk_doctor() {
   disk_dr_status=0
-  for disk_dr_tool in fatsort awk sed find sudo; do
+  disk_doctor_fatsort || disk_dr_status=1
+  for disk_dr_tool in awk sed find sudo; do
     disk_doctor_tool "${disk_dr_tool}" "required" || disk_dr_status=1
   done
   disk_doctor_platform || disk_dr_status=1
