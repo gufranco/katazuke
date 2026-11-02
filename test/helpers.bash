@@ -390,8 +390,10 @@ disk_test_corrupt_fat() {
   reserved="$(${root} od -An -tu2 -j14 -N2 "${part}")" || return 1
   sector="${sector//[[:space:]]/}"
   reserved="${reserved//[[:space:]]/}"
+  local -a write=(command -p dd)
+  [[ -z "${root}" ]] || write=("${root}" dd)
   printf '\377\377\377\377\377\377\377\377' |
-    ${root} dd of="${part}" bs=1 seek=$((sector * reserved + 64)) conv=notrunc 2>/dev/null
+    "${write[@]}" of="${part}" bs=1 seek=$((sector * reserved + 64)) conv=notrunc 2>/dev/null
 }
 
 disk_test_detach() {
