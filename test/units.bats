@@ -44,6 +44,32 @@ fake_tool() {
   [[ "${output}" == "busybox 1.36.1" ]]
 }
 
+@test "a BusyBox applet that names itself after its error line is named busybox" {
+  # Arrange
+  mkdir -p "${WORK}/bin"
+  printf '#!/bin/sh\necho "awk: invalid option -- -"\necho "BusyBox v1.37.0 (Ubuntu 1:1.37.0-7ubuntu1) multi-call binary."\n' >"${WORK}/bin/awk"
+  chmod +x "${WORK}/bin/awk"
+
+  # Act
+  run disk_test_call disk_tool_flavor "${WORK}/bin/awk"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == "busybox 1.37.0" ]]
+}
+
+@test "BusyBox sed, which says it is not GNU sed, is named busybox" {
+  # Arrange
+  fake_tool "${WORK}/bin/sed" "This is not GNU sed version 4.0"
+
+  # Act
+  run disk_test_call disk_tool_flavor "${WORK}/bin/sed"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == "busybox" ]]
+}
+
 @test "a GNU tool is named gnu with its version" {
   # Arrange
   fake_tool "${WORK}/bin/find" "find (GNU findutils) 4.10.0"
