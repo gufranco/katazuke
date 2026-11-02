@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/gufranco/katazuke/compare/v1.0.0...v1.0.1) (2026-11-02)
+
+
+### Bug Fixes
+
+* read BusyBox from any line of its answer ([839d73f](https://github.com/gufranco/katazuke/commit/839d73f54cc9ba219f2554422fe786b0193cfddd))
+
 # 1.0.0 (2026-11-02)
 
 
