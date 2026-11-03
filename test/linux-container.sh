@@ -16,7 +16,7 @@ docker run --rm --privileged \
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -qq >/dev/null
     apt-get install -y -qq --no-install-recommends \
-      bats zsh dash util-linux mount eject udev sudo ca-certificates fdisk \
+      bats zsh dash util-linux mount eject udev sudo ca-certificates git fdisk \
       dosfstools exfatprogs e2fsprogs fatsort parallel procps python3 mandoc >/dev/null
     i=0
     while [ "$i" -lt 64 ]; do
