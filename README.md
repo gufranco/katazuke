@@ -18,7 +18,7 @@ English | [日本語](README.ja.md) | [简体中文](README.zh-Hans.md) | [繁�
 
 </div>
 
-One command, 149 tests, 6 shell modules, and two dependencies beyond a POSIX system: fatsort and gum. `katazuke` is 片付け, Japanese for tidying up. Its companions [kakikomi](https://github.com/gufranco/kakikomi) writes disk images and [kiyome](https://github.com/gufranco/kiyome) wipes disks.
+One command, 160 tests, 6 shell modules, and two dependencies beyond a POSIX system: fatsort and gum. `katazuke` is 片付け, Japanese for tidying up. Its companions [kakikomi](https://github.com/gufranco/kakikomi) writes disk images and [kiyome](https://github.com/gufranco/kiyome) wipes disks.
 
 ---
 

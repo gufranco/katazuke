@@ -18,7 +18,7 @@
 
 </div>
 
-一個指令，149 個測試，6 個 shell 模組，除 POSIX 系統外只需要 fatsort 和 gum。`katazuke` 是日語的「片付け」，意思是收拾整理。它的姊妹工具 [kakikomi](https://github.com/gufranco/kakikomi) 負責寫入磁碟映像，[kiyome](https://github.com/gufranco/kiyome) 負責抹除磁碟。
+一個指令，160 個測試，6 個 shell 模組，除 POSIX 系統外只需要 fatsort 和 gum。`katazuke` 是日語的「片付け」，意思是收拾整理。它的姊妹工具 [kakikomi](https://github.com/gufranco/kakikomi) 負責寫入磁碟映像，[kiyome](https://github.com/gufranco/kiyome) 負責抹除磁碟。
 
 ---
 

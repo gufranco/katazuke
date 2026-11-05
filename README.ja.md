@@ -18,7 +18,7 @@
 
 </div>
 
-コマンドは 1 つ、テストは 149 個、シェルモジュールは 6 つ。POSIX システム以外に必要なのは fatsort と gum だけです。`katazuke` は日本語の「片付け」です。姉妹ツールの [kakikomi](https://github.com/gufranco/kakikomi) はディスクイメージを書き込み、[kiyome](https://github.com/gufranco/kiyome) はディスクを消去します。
+コマンドは 1 つ、テストは 160 個、シェルモジュールは 6 つ。POSIX システム以外に必要なのは fatsort と gum だけです。`katazuke` は日本語の「片付け」です。姉妹ツールの [kakikomi](https://github.com/gufranco/kakikomi) はディスクイメージを書き込み、[kiyome](https://github.com/gufranco/kiyome) はディスクを消去します。
 
 ---
 
