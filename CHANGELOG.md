@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.1.0](https://github.com/gufranco/katazuke/compare/v1.0.1...v1.1.0) (2026-11-05)
+
+
+### Features
+
+* draw the terminal interface with gum ([2fa970f](https://github.com/gufranco/katazuke/commit/2fa970fb445270ac2c3518738e4f1a4479cd1aae))
+
 ## [1.0.1](https://github.com/gufranco/katazuke/compare/v1.0.0...v1.0.1) (2026-11-02)
 
 
