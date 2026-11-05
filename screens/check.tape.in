@@ -1,0 +1,26 @@
+Source common.tape
+Output scratch.gif
+Set Height 1300
+Hide
+Type ". ./setup.sh"
+Enter
+Sleep 1s
+Show
+Sleep 800ms
+Type "katazuke check /Volumes/EZFLASH"
+Enter
+Sleep 8s
+Screenshot check.png
+Sleep 1s
+Hide
+Type "clear"
+Enter
+Show
+Sleep 800ms
+Type "katazuke"
+Enter
+Sleep 12s
+Screenshot picker.png
+Sleep 1s
+Ctrl+C
+Sleep 1s

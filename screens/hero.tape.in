@@ -1,0 +1,20 @@
+Source common.tape
+Output hero.gif
+Set Height 1100
+Hide
+Type ". ./setup.sh"
+Enter
+Sleep 1s
+Show
+Sleep 800ms
+Type "katazuke /Volumes/EZFLASH"
+Sleep 400ms
+Enter
+Sleep 5s
+Type "@DISK@"
+Sleep 500ms
+Screenshot confirm.png
+Enter
+Sleep 14s
+Screenshot result.png
+Sleep 2s

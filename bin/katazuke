@@ -15,6 +15,8 @@ DISK_LIB="$(cd "${disk_self%/*}/../lib" && pwd)" || exit 1
 DISK_PROG=katazuke
 # shellcheck source=SCRIPTDIR/../lib/core.sh
 . "${DISK_LIB}/core.sh"
+# shellcheck source=SCRIPTDIR/../lib/ui.sh
+. "${DISK_LIB}/ui.sh"
 # shellcheck source=SCRIPTDIR/../lib/cli.sh
 . "${DISK_LIB}/cli.sh"
 # shellcheck source=SCRIPTDIR/../lib/disk.sh
@@ -23,6 +25,14 @@ DISK_PROG=katazuke
 . "${DISK_LIB}/tidy.sh"
 
 disk_usage() {
+  if disk_ui_out; then
+    disk_usage_text | disk_ui_markdown | disk_gum format --theme "${DISK_UI_HELP}"
+    return 0
+  fi
+  disk_usage_text
+}
+
+disk_usage_text() {
   cat <<'USAGE'
 katazuke - remove junk files from a FAT or exFAT disk, then sort its folders
 
@@ -46,6 +56,7 @@ options:
                                     always refused
   --json                            print the result as one JSON object, for
                                     scripts
+  --theme NAME                      colours of the terminal interface, see notes
 
 environment:
   KATAZUKE_NATURAL, KATAZUKE_EJECT, KATAZUKE_ALLOW_INTERNAL and KATAZUKE_JSON
@@ -62,6 +73,12 @@ notes:
   files that macOS, Windows, Linux and NAS systems leave behind, then rewrites
   each folder in sorted order with fatsort. Each volume is checked read-only
   first, and a volume with filesystem errors is left untouched.
+
+  On a terminal with gum installed, katazuke draws its prompts, summary and
+  results with gum. --theme, else KATAZUKE_THEME, else KODOUGU_THEME picks
+  the colours: kodougu, catppuccin-mocha, catppuccin-latte, dracula, nord,
+  gruvbox, tokyo-night or mono. KODOUGU_ACCENT=#RRGGBB replaces only the
+  accent, and NO_COLOR turns colour off.
 
 examples:
   katazuke /dev/disk4
@@ -122,8 +139,35 @@ disk_volume_line() {
   disk_info "$1 $2, ${disk_vli_name}${disk_vli_label:+, ${disk_vli_label}}"
 }
 
+disk_summary_box() {
+  disk_sb_label=""
+  disk_sb_text="$1"
+  set --
+  while IFS= read -r disk_sb_line; do
+    case "${disk_sb_line}" in
+    "") continue ;;
+    " "*) set -- "$@" "" "${disk_sb_line#"${disk_sb_line%%[! ]*}"}" ;;
+    *)
+      disk_sb_label="${disk_sb_line%%:*}:"
+      disk_sb_value="${disk_sb_line#*:}"
+      set -- "$@" "${disk_sb_label}" "${disk_sb_value#"${disk_sb_value%%[! ]*}"}"
+      ;;
+    esac
+  done <<EOF
+${disk_sb_text}
+EOF
+  disk_ui_summary "$@"
+}
+
 disk_summary() {
   [ "${KATAZUKE_JSON:-n}" != y ] || return 0
+  if [ "${DISK_SUMMARY_BOXED}" = no ] && disk_ui_out; then
+    DISK_SUMMARY_BOXED=yes
+    disk_sm_text="$(disk_summary "$1")"
+    DISK_SUMMARY_BOXED=no
+    disk_summary_box "${disk_sm_text}"
+    return 0
+  fi
   printf '\n'
   disk_sm_size="$(disk_size_bytes "$1")"
   disk_sm_human="$(disk_human "${disk_sm_size}")"
@@ -234,7 +278,7 @@ disk_check_volume() {
     disk_json_part "$1" "\"junk\":[${disk_cv_list}]"
   elif [ "${disk_cv_count}" -gt 0 ]; then
     disk_cv_text="$(printf '%s\n' "${disk_cv_junk}" | awk '{ print "        " $0 }')"
-    disk_say 8 "${disk_cv_text}"
+    disk_say "${disk_cv_text}"
   else
     disk_info "        no junk files"
   fi
@@ -305,6 +349,9 @@ disk_cli_start() {
     return "$?"
   fi
   if disk_cli_interactive; then
+    if disk_ui_prompts; then
+      disk_ui_header
+    fi
     disk_cs_disk="$(disk_pick "Tidy which disk? Number or name: ")" || return 1
     disk_report "${disk_cs_action}" "${disk_cs_disk}"
     return "$?"
@@ -314,6 +361,44 @@ disk_cli_start() {
 }
 
 disk_main() {
+  disk_mn_count=$#
+  disk_mn_literal=no
+  while [ "${disk_mn_count}" -gt 0 ]; do
+    disk_mn_arg="$1"
+    shift
+    disk_mn_count=$((disk_mn_count - 1))
+    case "${disk_mn_literal}:${disk_mn_arg}" in
+    no:--) disk_mn_literal=yes ;;
+    no:--theme=*)
+      DISK_THEME="${disk_mn_arg#--theme=}"
+      continue
+      ;;
+    no:--theme)
+      [ "${disk_mn_count}" -gt 0 ] || disk_main_stop "option '--theme' needs a value"
+      DISK_THEME="$1"
+      shift
+      disk_mn_count=$((disk_mn_count - 1))
+      continue
+      ;;
+    *) ;;
+    esac
+    set -- "$@" "${disk_mn_arg}"
+  done
+  disk_ui_setup || disk_main_fail "${DISK_UI_PROBLEM}"
+  disk_route "$@"
+}
+
+disk_main_stop() {
+  disk_cli_hint "$1"
+  exit 1
+}
+
+disk_main_fail() {
+  disk_error "$1"
+  exit 1
+}
+
+disk_route() {
   case "${1:-}" in
   help | -h | --help) disk_usage ;;
   version | -V | --version) disk_cli_version ;;

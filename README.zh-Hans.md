@@ -18,9 +18,13 @@
 
 </div>
 
-一个命令，80 个测试，5 个 shell 模块，除 POSIX 系统外只依赖 fatsort。`katazuke` 是日语的「片付け」，意思是收拾整理。它的姊妹工具 [kakikomi](https://github.com/gufranco/kakikomi) 负责写入磁盘映像，[kiyome](https://github.com/gufranco/kiyome) 负责擦除磁盘。
+一个命令，149 个测试，6 个 shell 模块，除 POSIX 系统外只依赖 fatsort 和 gum。`katazuke` 是日语的「片付け」，意思是收拾整理。它的姊妹工具 [kakikomi](https://github.com/gufranco/kakikomi) 负责写入磁盘映像，[kiyome](https://github.com/gufranco/kiyome) 负责擦除磁盘。
 
 ---
+
+<p align="center">
+  <img src="screens/hero.gif" alt="在终端中运行的 katazuke：从第一个输入到结果" width="800">
+</p>
 
 ```console
 $ katazuke check /Volumes/EZFLASH
@@ -54,6 +58,7 @@ Ejected. /dev/disk8 is safe to remove.
 
 | 工具 | 用途 | 安装 |
 |:-----|:-----|:-----|
+| [`gum`](https://github.com/charmbracelet/gum) | 终端界面：菜单、输入、表格和配色 | `brew install gum`。Homebrew formula 会自动安装 |
 | POSIX `sh`、`awk`、`sed`、`find` | 工具本身 | macOS 和 Linux 已预装。不需要 `bash` |
 | `fatsort` | 按排序重写每个文件夹。1.7 及以上版本可排序所有 exFAT 卷；Ubuntu 26.04 自带的 1.6.5 无法排序用 `mkfs.exfat` 格式化的卷 | `brew install fatsort`；`apt install fatsort` |
 | `fsck_msdos`、`fsck_exfat` | 在 macOS 上于任何改动前做只读检查 | 已预装 |
@@ -79,6 +84,7 @@ make install
 
 ```console
 $ katazuke doctor
+gum                ok       /opt/homebrew/bin/gum
 fatsort            ok       /opt/homebrew/bin/fatsort
 awk                ok       /opt/homebrew/opt/gawk/libexec/gnubin/awk, gnu 5.4.1
 sed                ok       /opt/homebrew/opt/gnu-sed/libexec/gnubin/sed, gnu 4.10
@@ -107,6 +113,7 @@ fsck_exfat         ok       /sbin/fsck_exfat
 | `--eject`、`--no-eject` | 完成后弹出磁盘。默认开启 |
 | `--allow-internal` | 允许内置磁盘。运行中系统所在的磁盘始终会被拒绝 |
 | `--json` | 以一个 JSON 对象输出结果，供脚本使用 |
+| `--theme <name>` | 终端界面的配色 |
 
 也可以写成 `--order=mixed`，`--` 表示选项结束。环境变量 `KATAZUKE_NATURAL`、`KATAZUKE_EJECT`、`KATAZUKE_ALLOW_INTERNAL` 和 `KATAZUKE_JSON` 取 `y` 或 `n`，`KATAZUKE_ORDER` 取对应的值，效果与选项相同；命令行上的选项优先。
 
@@ -122,6 +129,14 @@ katazuke --order mixed --no-eject /dev/disk4
 **指定单个分区同样代表整个磁盘。** `katazuke /dev/disk8s2` 会整理 `/dev/disk8` 上的每个 FAT 和 exFAT 卷，而不只是第二个分区。确认之前，摘要会列出每个卷，一次确认即适用于全部。磁盘上的其他文件系统，例如 APFS 或 ext4，不会被改动。各卷按顺序整理，若某个卷检查失败，流程即在该处停止：之前的卷保持已整理，之后的卷不受影响。
 
 katazuke 遵循家族共享的命令行约定，内容见 [FAMILY.md](FAMILY.md)。
+
+### 主题
+
+在装有 `gum` 的终端里，katazuke 用 gum 绘制菜单、输入、表格和消息；在管道或脚本中，输出仍是纯文本。配色依次由 `--theme`、`KATAZUKE_THEME`、`KODOUGU_THEME` 决定，最后一个由所有 kodougu 工具共用：`kodougu`（默认）、`catppuccin-mocha`、`catppuccin-latte`、`dracula`、`nord`、`gruvbox`、`tokyo-night` 或 `mono`。`KODOUGU_ACCENT=#RRGGBB` 只替换强调色，`NO_COLOR` 关闭颜色。
+
+```bash
+export KODOUGU_THEME=catppuccin-mocha
+```
 
 <a id="what-it-removes"></a>
 
@@ -167,6 +182,35 @@ katazuke 从不写入 `.fseventsd/no_log`：在 FAT 磁盘上它会留下四个�
 
 可在六种常见工具集上运行：使用 GNU、uutils 或 BusyBox 工具的 Linux，以及使用系统自带工具、其较新的 Homebrew 版本或 Homebrew uutils 工具的 macOS。`katazuke doctor` 会写出 `awk`、`sed` 和 `find` 的种类与版本，例如 `gnu 4.10.0`、`uutils 0.8.0` 或 `bsd 20200816`，让问题报告说明当时运行的是哪些工具。
 
+<a id="screens"></a>
+
+## 界面
+
+<details>
+<summary>全部界面，均由 <code>make screens</code> 录自真实运行</summary>
+<br>
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="screens/confirm.png" alt="katazuke: 危险框下输入名称"><br><sub>危险框下输入名称</sub></td>
+<td width="50%" valign="top"><img src="screens/result.png" alt="katazuke: 结果"><br><sub>结果</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/check.png" alt="katazuke: check 列出垃圾文件，不做任何更改"><br><sub>check 列出垃圾文件，不做任何更改</sub></td>
+<td width="50%" valign="top"><img src="screens/picker.png" alt="katazuke: 选择磁盘"><br><sub>选择磁盘</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/error.png" alt="katazuke: 错误"><br><sub>错误</sub></td>
+<td width="50%" valign="top"><img src="screens/doctor.png" alt="katazuke: doctor 检查所需的每个工具"><br><sub>doctor 检查所需的每个工具</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/themes.png" alt="katazuke: 六种主题下的版本标记"><br><sub>六种主题下的版本标记</sub></td>
+<td width="50%" valign="top"><img src="screens/help.png" alt="katazuke: 帮助页"><br><sub>帮助页</sub></td>
+</tr>
+</table>
+
+</details>
+
 <a id="development"></a>
 
 ## 开发
@@ -179,6 +223,7 @@ katazuke 从不写入 `.fseventsd/no_log`：在 FAT 磁盘上它会留下四个�
 | `make test-all` | 在每种 shell 下运行同样的测试，macOS 上包括 bash 和 zsh 的两个版本 |
 | `make test-linux` | 在 Ubuntu 容器中运行同样的测试 |
 | `make coverage` | 合并本机与 Ubuntu 容器中的 bashcov 行覆盖率，并执行与 CI 相同的 100% 门槛 |
+| `make screens` | 在 macOS 上用 VHS 从真实工具录制 README 的界面 |
 
 测试会创建真实的 FAT12、FAT16、FAT32 和 exFAT 磁盘映像，用 `hdiutil` 或 `losetup` 挂接，并实际进行整理。CI 在 Ubuntu 和 macOS 上运行测试。推送到 `main` 且 CI 通过后，semantic-release 会运行：`feat` 或 `fix` 提交会发布新版本，更新 [`lib/core.sh`](lib/core.sh) 中的 `KATAZUKE_VERSION` 和 CHANGELOG，并更新 Homebrew formula。
 

@@ -76,7 +76,7 @@ teardown() {
 
   # Assert
   [[ "${status}" -eq 0 ]]
-  [[ "${lines[0]}" == "fatsort            ${state}"* ]]
+  [[ "${lines[1]}" == "fatsort            ${state}"* ]]
   [[ "${output}" == *"sudo               ok"* ]]
 }
 
@@ -90,7 +90,7 @@ teardown() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${lines[0]}" == "fatsort            missing  required" ]]
+  [[ "${lines[1]}" == "fatsort            missing  required" ]]
 }
 
 @test "doctor fails when a platform tool is missing" {
@@ -285,7 +285,7 @@ teardown() {
   local expected="katazuke: unknown option '--nope'. run 'katazuke help' for usage."
 
   # Act
-  DISK_PROG=other DISK_WIDTH=10 KATAZUKE_TERMINAL=1 run disk_test_run --nope
+  DISK_PROG=other run disk_test_run --nope
 
   # Assert
   [[ "${status}" -eq 1 ]]

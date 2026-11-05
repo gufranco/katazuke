@@ -19,8 +19,8 @@ Guidance for anyone, human or agent, changing katazuke. What katazuke is and how
 ## Names
 
 - Globals carry `DISK_`; function-scoped variables carry a per-function `disk_` prefix, the same names kakikomi and kiyome use for their shared helpers.
-- Settings come from `KATAZUKE_<NAME>`, such as `KATAZUKE_ORDER` or `KATAZUKE_JSON`; test switches are `KATAZUKE_TERMINAL`, `KATAZUKE_INTERACTIVE`, `KATAZUKE_TEST_SHELLS` and `KATAZUKE_TEST_RECORD`.
-- Output goes through `disk_info`, `disk_say`, `disk_success`, `disk_error` and `disk_warning`.
+- Settings come from `KATAZUKE_<NAME>`, such as `KATAZUKE_ORDER` or `KATAZUKE_JSON`; test switches are `KATAZUKE_INTERACTIVE`, `KATAZUKE_TEST_SHELLS`, `KATAZUKE_TEST_RECORD`, `KATAZUKE_TEST_GUM`, `KATAZUKE_TEST_GUM_LOG`, `KATAZUKE_TEST_GUM_ANSWERS` and `KATAZUKE_TEST_GUM_SPIN`.
+- Output goes through `disk_info`, `disk_say`, `disk_success`, `disk_error` and `disk_warning`, which hand over to the `disk_ui_` helpers in [`lib/ui.sh`](lib/ui.sh) where gum draws.
 
 ## Behaviour
 
@@ -45,6 +45,7 @@ Guidance for anyone, human or agent, changing katazuke. What katazuke is and how
 ## Release
 
 - `KATAZUKE_VERSION` lives in [`lib/core.sh`](lib/core.sh).
+- The tap's `Formula/katazuke.rb` depends on `fatsort` and `gum`.
 
 ## Gaps against FAMILY.md
 

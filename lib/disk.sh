@@ -157,13 +157,20 @@ disk_pick() {
     return 1
   fi
   disk_pk_index=0
+  disk_pk_lines=""
   for disk_pk_disk in ${disk_pk_list}; do
     disk_pk_index=$((disk_pk_index + 1))
     disk_pk_size="$(disk_size_bytes "${disk_pk_disk}")"
     disk_pk_human="$(disk_human "${disk_pk_size}")"
     disk_pk_id="$(disk_identity "${disk_pk_disk}")"
-    printf '  %d) %-14s %10s  %s\n' "${disk_pk_index}" "${disk_pk_disk}" "${disk_pk_human}" "${disk_pk_id}" >&2
+    disk_pk_lines="${disk_pk_lines:-}$(printf '%-14s %10s  %s|%s' "${disk_pk_disk}" "${disk_pk_human}" "${disk_pk_id}" "${disk_pk_disk}")
+"
+    disk_ui_prompts || printf '  %d) %-14s %10s  %s\n' "${disk_pk_index}" "${disk_pk_disk}" "${disk_pk_human}" "${disk_pk_id}" >&2
   done
+  if disk_ui_prompts; then
+    printf '%s' "${disk_pk_lines}" | disk_ui_choose "${1%%\?*}?" --label-delimiter "|"
+    return
+  fi
   printf '%s' "$1" >&2
   disk_pk_answer=""
   IFS= read -r disk_pk_answer || [ -n "${disk_pk_answer}" ] || return 1
@@ -187,9 +194,14 @@ disk_pick_one() {
 
 disk_confirm_names() {
   disk_cf_expected="${1##*/}"
-  printf 'Type %s to %s, or anything else to stop: ' "${disk_cf_expected}" "$2" >&2
   disk_cf_answer=""
-  IFS= read -r disk_cf_answer || true
+  if disk_ui_prompts; then
+    disk_ui_danger "This will $2 everything on ${disk_cf_expected}." "Check the name before you type it."
+    disk_cf_answer="$(disk_ui_input "Type ${disk_cf_expected} to $2, or anything else to stop" "${disk_cf_expected}")" || disk_cf_answer=""
+  else
+    printf 'Type %s to %s, or anything else to stop: ' "${disk_cf_expected}" "$2" >&2
+    IFS= read -r disk_cf_answer || true
+  fi
   if [ "${disk_cf_answer##*/}" != "${disk_cf_expected}" ]; then
     disk_error "stopped: nothing was changed."
     return 1

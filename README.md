@@ -18,9 +18,13 @@ English | [日本語](README.ja.md) | [简体中文](README.zh-Hans.md) | [繁�
 
 </div>
 
-One command, 80 tests, 5 shell modules, and one dependency beyond a POSIX system: fatsort. `katazuke` is 片付け, Japanese for tidying up. Its companions [kakikomi](https://github.com/gufranco/kakikomi) writes disk images and [kiyome](https://github.com/gufranco/kiyome) wipes disks.
+One command, 149 tests, 6 shell modules, and two dependencies beyond a POSIX system: fatsort and gum. `katazuke` is 片付け, Japanese for tidying up. Its companions [kakikomi](https://github.com/gufranco/kakikomi) writes disk images and [kiyome](https://github.com/gufranco/kiyome) wipes disks.
 
 ---
+
+<p align="center">
+  <img src="screens/hero.gif" alt="katazuke running in a terminal, from the first prompt to the result" width="800">
+</p>
 
 ```console
 $ katazuke check /Volumes/EZFLASH
@@ -54,6 +58,7 @@ Ejected. /dev/disk8 is safe to remove.
 
 | Tool | Why | Install |
 |:-----|:----|:--------|
+| [`gum`](https://github.com/charmbracelet/gum) | The terminal interface: menus, prompts, tables and colours | `brew install gum`. Installed automatically by the Homebrew formula |
 | POSIX `sh`, `awk`, `sed`, `find` | The tool itself | Preinstalled on macOS and Linux. `bash` is not required |
 | `fatsort` | Rewrites each folder in sorted order. 1.7 or later sorts every exFAT volume; Ubuntu 26.04 ships 1.6.5, which cannot sort one formatted by `mkfs.exfat` | `brew install fatsort`; `apt install fatsort` |
 | `fsck_msdos`, `fsck_exfat` | The read-only check before any change, on macOS | Preinstalled |
@@ -79,6 +84,7 @@ make install
 
 ```console
 $ katazuke doctor
+gum                ok       /opt/homebrew/bin/gum
 fatsort            ok       /opt/homebrew/bin/fatsort
 awk                ok       /opt/homebrew/opt/gawk/libexec/gnubin/awk, gnu 5.4.1
 sed                ok       /opt/homebrew/opt/gnu-sed/libexec/gnubin/sed, gnu 4.10
@@ -107,6 +113,7 @@ fsck_exfat         ok       /sbin/fsck_exfat
 | `--eject`, `--no-eject` | Eject the disk when done. On by default |
 | `--allow-internal` | Allow an internal disk. The disk holding the running system is always refused |
 | `--json` | Print the result as one JSON object, for scripts |
+| `--theme <name>` | Colours of the terminal interface |
 
 `--order=mixed` works too, and `--` ends the options. The environment variables `KATAZUKE_NATURAL`, `KATAZUKE_EJECT`, `KATAZUKE_ALLOW_INTERNAL` and `KATAZUKE_JSON`, each `y` or `n`, and `KATAZUKE_ORDER` set the same options; an option on the command line wins.
 
@@ -122,6 +129,14 @@ A disk is named by its device, such as `/dev/disk4`, or by any volume mounted fr
 **One partition stands for its whole disk too.** `katazuke /dev/disk8s2` tidies every FAT and exFAT volume on `/dev/disk8`, not only the second partition. The summary lists each volume before you confirm, and one confirmation covers them all. Other filesystems on the disk, such as APFS or ext4, are left alone. Volumes are tidied in order, and a volume that fails its check stops the run: the ones before it stay tidied and the ones after it are untouched.
 
 katazuke follows the shared command-line contract of its family, described in [FAMILY.md](FAMILY.md).
+
+### Themes
+
+On a terminal with `gum` installed, katazuke draws its menus, prompts, tables and messages with gum; in a pipe or a script the output stays plain text. `--theme`, else `KATAZUKE_THEME`, else `KODOUGU_THEME` picks the colours, the last one shared by every kodougu tool: `kodougu` (default), `catppuccin-mocha`, `catppuccin-latte`, `dracula`, `nord`, `gruvbox`, `tokyo-night` or `mono`. `KODOUGU_ACCENT=#RRGGBB` replaces only the accent, and `NO_COLOR` turns colour off.
+
+```bash
+export KODOUGU_THEME=catppuccin-mocha
+```
 
 <a id="what-it-removes"></a>
 
@@ -167,6 +182,35 @@ Everything is POSIX `sh` with ShellCheck `-o all` at zero findings. The suites r
 
 Every run works on the six toolsets in common use: Linux with GNU, uutils or BusyBox tools, and macOS with the tools it ships, Homebrew's newer builds of them, or Homebrew's uutils tools. `katazuke doctor` names the flavor and version of `awk`, `sed` and `find`, such as `gnu 4.10.0`, `uutils 0.8.0` or `bsd 20200816`, so a bug report says which tools ran.
 
+<a id="screens"></a>
+
+## Screens
+
+<details>
+<summary>Every screen, recorded from a real run with <code>make screens</code></summary>
+<br>
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="screens/confirm.png" alt="katazuke: The typed name, under the danger box"><br><sub>The typed name, under the danger box</sub></td>
+<td width="50%" valign="top"><img src="screens/result.png" alt="katazuke: The result"><br><sub>The result</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/check.png" alt="katazuke: check lists the junk, changing nothing"><br><sub>check lists the junk, changing nothing</sub></td>
+<td width="50%" valign="top"><img src="screens/picker.png" alt="katazuke: The disk picker"><br><sub>The disk picker</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/error.png" alt="katazuke: An error"><br><sub>An error</sub></td>
+<td width="50%" valign="top"><img src="screens/doctor.png" alt="katazuke: doctor checks every tool it needs"><br><sub>doctor checks every tool it needs</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/themes.png" alt="katazuke: The version badge in six themes"><br><sub>The version badge in six themes</sub></td>
+<td width="50%" valign="top"><img src="screens/help.png" alt="katazuke: The help page"><br><sub>The help page</sub></td>
+</tr>
+</table>
+
+</details>
+
 <a id="development"></a>
 
 ## Development
@@ -179,6 +223,7 @@ Every run works on the six toolsets in common use: Linux with GNU, uutils or Bus
 | `make test-all` | The same tests under every shell, both builds of bash and zsh included on macOS |
 | `make test-linux` | The same tests in an Ubuntu container |
 | `make coverage` | bashcov line coverage on this Mac and in the Ubuntu container, merged, with the 100% gate CI enforces |
+| `make screens` | Record the README screens from the real tool with VHS, on macOS |
 
 The tests build real FAT12, FAT16, FAT32 and exFAT disk images, attach them with `hdiutil` or `losetup`, and tidy them for real. CI runs them on Ubuntu and macOS. Once CI passes on a push to `main`, semantic-release runs: a `feat` or `fix` commit publishes a release, updates `KATAZUKE_VERSION` in [`lib/core.sh`](lib/core.sh) and the CHANGELOG, and bumps the Homebrew formula.
 

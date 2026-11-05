@@ -4,6 +4,8 @@ KATAZUKE_TESTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "${KATAZUKE_TESTS_DIR}/.." && pwd)"
 KATAZUKE_TEST_OS="$(uname -s)"
 export KATAZUKE_TESTS_DIR REPO_DIR KATAZUKE_TEST_OS
+PATH="${KATAZUKE_TESTS_DIR}/bin:${PATH}"
+export PATH
 
 disk_test_path() {
   local base="${PATH}"

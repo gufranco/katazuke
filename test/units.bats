@@ -141,7 +141,7 @@ fake_tool() {
 
   # Assert
   [[ "${status}" -eq 0 ]]
-  [[ "${lines[0]}" == "fatsort            warn     "*", 1.6.5.640, 1.7 or later sorts every exFAT volume" ]]
+  [[ "${lines[1]}" == "fatsort            warn     "*", 1.6.5.640, 1.7 or later sorts every exFAT volume" ]]
 }
 
 @test "a fatsort before 1.0 is reported as dated" {
