@@ -218,7 +218,7 @@ Every run works on the six toolsets in common use: Linux with GNU, uutils or Bus
 | Command | Description |
 |:--------|:------------|
 | `make fmt` | Formats every script with shfmt |
-| `make lint` | shfmt, ShellCheck on every script, test and completion, the name check, and mandoc on the man page |
+| `make lint` | shfmt, ShellCheck on every script, test and completion, the name check, mandoc on the man page, and yamllint and actionlint on the workflows |
 | `make test` | The `bats` tests under the system `sh` |
 | `make test-all` | The same tests under every shell, both builds of bash and zsh included on macOS |
 | `make test-linux` | The same tests in an Ubuntu container |
